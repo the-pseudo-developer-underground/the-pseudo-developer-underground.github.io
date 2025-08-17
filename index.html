@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="icon" href="heart.png" type="image/png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ff6f91">
+  
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Our Anniversary</title>
+<link rel="stylesheet" href="style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Quicksand&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<main class="main-container">
+  <header class="header">
+    <h1>Happy Anniversary <span class="heart">♥</span></h1>
+  </header>
+
+  <section class="quote-section">
+    <blockquote id="quote">Loading your special message...</blockquote>
+  </section>
+  <script>
+    const quotes = [
+      "I love you more than coffee... and that's saying something.",
+      "You're my today and all of my tomorrows.",
+      "Our story is my favorite."
+    ];
+  
+    const quoteElement = document.getElementById('quote');
+    if (quoteElement) {
+      const today = new Date().getDate();
+      const index = today % quotes.length;
+      quoteElement.textContent = quotes[index];
+    }
+  </script>
+  
+
+  <section class="nav-buttons">
+    <a href="games/tetris.html" class="btn">Tetris</a>
+    <a href="games/puzzle.html" class="btn">Us Puzzle</a>
+    <a href="games/flappy.html" class="btn">Flappy Hearts</a>
+    <a href="gallery.html" class="btn">Photo Gallery</a>
+  </section>
+
+  <footer class="footer">
+    <small>© Us — <span id="easter-egg" class="linkish">A + B</span></small>
+  </footer>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>

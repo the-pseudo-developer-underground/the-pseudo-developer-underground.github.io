@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gallery</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="logo">Us ♥</a>
+</nav>
+
+<div class="gallery-container">
+  <div class="arrow left" id="prev">&#10094;</div>
+  
+  <div class="polaroid-frame">
+    <img id="galleryImage" class="photo" src="images/gallery/1.jpg" alt="Gallery Photo" title="Click to toggle fullscreen" />
+    <img src="images/frame.png" alt="Polaroid Frame" class="frame-overlay" />
+    <div class="caption" id="caption">Photo 1</div>
+  </div>
+  
+  
+  
+  <div class="arrow right" id="next">&#10095;</div>
+</div>
+
+<script>
+  const images = [
+    {src: "images/gallery/1.jpg", caption: "One of our first ever pics"},
+    {src: "images/gallery/2.jpg", caption: "Cuties enjoying the field"},
+    {src: "images/gallery/3.jpg", caption: "I love the jacket you have onn"},
+    {src: "images/gallery/4.jpg", caption: "Some more field actionn"},
+    {src: "images/gallery/5.jpg", caption: "THE SPURR (beat ur mom and fine shyt to it)"},
+    {src: "images/gallery/6.jpg", caption: "We must really love the field 😭"},
+    {src: "images/gallery/7.jpg", caption: "Couple goalsss 🫶🏾"},
+    {src: "images/gallery/8.jpg", caption: "How on Earth are you so cute???"}
+  ];
+
+  let currentIndex = 0;
+  const imgEl = document.getElementById("galleryImage");
+  const capEl = document.getElementById("caption");
+
+  function showImage(index) {
+    if (index < 0) index = images.length - 1;
+    if (index >= images.length) index = 0;
+    currentIndex = index;
+    imgEl.src = images[index].src;
+    capEl.textContent = images[index].caption;
+  }
+
+  document.getElementById("prev").addEventListener("click", () => showImage(currentIndex - 1));
+  document.getElementById("next").addEventListener("click", () => showImage(currentIndex + 1));
+
+  showImage(0);
+
+  const photo = document.querySelector('.photo');
+
+photo.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    photo.requestFullscreen().catch(err => {
+      alert(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`);
+    });
+  } else {
+    document.exitFullscreen();
+  }
+});
+
+</script>
+
+</body>
+</html>

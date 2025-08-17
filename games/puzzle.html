@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Love Puzzle ❤️</title>
+<style>
+body{margin:0;font-family:sans-serif;background:linear-gradient(135deg,#ffe8f0,#ffd9e3);display:flex;flex-direction:column;align-items:center;min-height:100vh;}
+h1{margin-top:20px;color:#d63e50;text-align:center;}
+.container{position:relative;width:90%;max-width:400px;}
+canvas{border-radius:12px;box-shadow:0 10px 24px rgba(255,111,145,.35);width:100%;display:block;margin-top:20px;touch-action:none;}
+button{margin-top:15px;padding:10px 16px;border-radius:999px;border:none;background:#ff6f91;color:#fff;font-weight:700;cursor:pointer;}
+#message{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2rem;color:#d63e50;font-weight:800;display:none;text-align:center;}
+</style>
+</head>
+<body>
+<h1>Love Puzzle ❤️</h1>
+<div class="container">
+  <canvas id="puzzle" width="300" height="300"></canvas>
+  <div id="message">❤️ You solved it! ❤️</div>
+  <button id="restartBtn">New Puzzle</button>
+</div>
+<script>
+const canvas = document.getElementById('puzzle');
+const ctx = canvas.getContext('2d');
+const message = document.getElementById('message');
+const restartBtn = document.getElementById('restartBtn');
+
+const ROWS=3, COLS=3;
+let img=null, tileOrder=[], tileWidth=0, tileHeight=0;
+const images=['../images/gallery/1.jpg','../images/gallery/2.jpg','../images/gallery/3.jpg','../images/gallery/4.jpg'];
+
+// Animation
+let animating=false, movingTile=null, moveProgress=0, moveFrom=null, moveTo=null;
+
+// Highlight
+let highlightTile=null, highlightGlow=0, glowDirection=1;
+
+// Drag
+let draggingTile=null, dragStart={x:0,y:0};
+
+function initPuzzle(){
+  message.style.display='none';
+  img = new Image();
+  const src = images[Math.floor(Math.random()*images.length)];
+  img.onload = ()=>{
+    canvas.width = img.width;
+    canvas.height = img.height;
+    tileWidth = img.width/COLS;
+    tileHeight = img.height/ROWS;
+    setupTiles();
+    shuffleTiles();
+    drawPuzzle();
+  };
+  img.onerror = ()=>alert("Image failed to load: "+src);
+  img.src = src;
+}
+
+function setupTiles(){
+  tileOrder=[];
+  for(let y=0;y<ROWS;y++){
+    for(let x=0;x<COLS;x++){
+      tileOrder.push({x:x,y:y});
+    }
+  }
+}
+
+function shuffleTiles(){
+  for(let i=tileOrder.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*i);
+    [tileOrder[i], tileOrder[j]]=[tileOrder[j], tileOrder[i]];
+  }
+}
+
+function drawPuzzle(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let i=0;i<tileOrder.length;i++){
+    const piece=tileOrder[i];
+    let dx=(i%COLS)*tileWidth;
+    let dy=Math.floor(i/COLS)*tileHeight;
+    if(movingTile && movingTile.idx===i){
+      dx = moveFrom.dx + (moveTo.dx - moveFrom.dx) * moveProgress;
+      dy = moveFrom.dy + (moveTo.dy - moveFrom.dy) * moveProgress;
+    }
+    ctx.drawImage(img, piece.x*tileWidth, piece.y*tileHeight, tileWidth, tileHeight, dx, dy, tileWidth, tileHeight);
+    ctx.strokeStyle='rgba(0,0,0,.1)';
+    ctx.strokeRect(dx, dy, tileWidth, tileHeight);
+    // Highlight
+    if(highlightTile && highlightTile.idx===i){
+      highlightGlow += 0.05*glowDirection;
+      if(highlightGlow>0.7) glowDirection=-1;
+      if(highlightGlow<0) glowDirection=1;
+      ctx.strokeStyle = `rgba(255,111,145,${0.4 + highlightGlow})`;
+      ctx.lineWidth = 4 + highlightGlow*4;
+      ctx.strokeRect(dx+2, dy+2, tileWidth-4, tileHeight-4);
+    }
+  }
+  ctx.lineWidth=1;
+}
+
+function getTileFromCoords(clientX, clientY){
+  const rect=canvas.getBoundingClientRect();
+  const x=Math.floor(((clientX-rect.left)/rect.width)*COLS);
+  const y=Math.floor(((clientY-rect.top)/rect.height)*ROWS);
+  return {x:x, y:y, idx:y*COLS + x};
+}
+
+function animateMove(tile, dir){
+  if(animating) return;
+  animating=true;
+  movingTile = tile;
+  moveProgress=0;
+  moveFrom = {dx:(tile.idx%COLS)*tileWidth, dy:Math.floor(tile.idx/COLS)*tileHeight};
+  let targetIdx = tile.idx;
+  if(dir==='left' && tile.x>0) targetIdx = tile.idx -1;
+  if(dir==='right' && tile.x<COLS-1) targetIdx = tile.idx +1;
+  if(dir==='up' && tile.y>0) targetIdx = tile.idx - COLS;
+  if(dir==='down' && tile.y<ROWS-1) targetIdx = tile.idx + COLS;
+  moveTo = {dx:(targetIdx%COLS)*tileWidth, dy:Math.floor(targetIdx/COLS)*tileHeight};
+
+  function step(){
+    moveProgress+=0.2;
+    if(moveProgress>=1){
+      moveProgress=1;
+      [tileOrder[tile.idx], tileOrder[targetIdx]]=[tileOrder[targetIdx], tileOrder[tile.idx]];
+      movingTile=null;
+      animating=false;
+      drawPuzzle();
+      checkSolved();
+    } else {
+      drawPuzzle();
+      requestAnimationFrame(step);
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+// Drag start
+canvas.addEventListener('mousedown', e=>{
+  draggingTile = getTileFromCoords(e.clientX,e.clientY);
+  dragStart={x:e.clientX,y:e.clientY};
+});
+canvas.addEventListener('touchstart', e=>{
+  const t = e.touches[0];
+  draggingTile = getTileFromCoords(t.clientX,t.clientY);
+  dragStart={x:t.clientX,y:t.clientY};
+});
+
+// Drag end
+canvas.addEventListener('mouseup', e=>{
+  handleDragEnd(e.clientX, e.clientY);
+});
+canvas.addEventListener('touchend', e=>{
+  const t = e.changedTouches[0];
+  handleDragEnd(t.clientX, t.clientY);
+});
+
+function handleDragEnd(endX, endY){
+  if(!draggingTile) return;
+  const dx=endX-dragStart.x, dy=endY-dragStart.y;
+  if(Math.abs(dx)>Math.abs(dy)){
+    if(dx>10) animateMove(draggingTile,'right');
+    else if(dx<-10) animateMove(draggingTile,'left');
+  } else {
+    if(dy>10) animateMove(draggingTile,'down');
+    else if(dy<-10) animateMove(draggingTile,'up');
+  }
+  draggingTile=null;
+}
+
+// Highlight hover
+canvas.addEventListener('mousemove', e=>{
+  highlightTile = getTileFromCoords(e.clientX,e.clientY);
+});
+canvas.addEventListener('mouseleave', ()=>highlightTile=null);
+
+function checkSolved(){
+  for(let i=0;i<tileOrder.length;i++){
+    if(tileOrder[i].x!==i%COLS || tileOrder[i].y!==Math.floor(i/COLS)) return;
+  }
+  message.style.display='block';
+}
+
+// Animation loop
+function animationLoop(){
+  if(highlightTile || animating){
+    drawPuzzle();
+  }
+  requestAnimationFrame(animationLoop);
+}
+animationLoop();
+
+restartBtn.addEventListener('click', initPuzzle);
+initPuzzle();
+</script>
+</body>
+</html>
